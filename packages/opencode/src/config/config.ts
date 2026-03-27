@@ -1034,6 +1034,68 @@ export namespace Config {
             .describe("Timeout in milliseconds for model context protocol (MCP) requests"),
         })
         .optional(),
+      media: z
+        .object({
+          default_image_provider: z
+            .string()
+            .optional()
+            .describe(
+              "Default provider id for image generation (e.g. 'openai-image', 'seedream'). Falls back to 'openai-image'.",
+            ),
+          default_video_provider: z
+            .string()
+            .optional()
+            .describe("Default provider id for video generation (e.g. 'nanobana', 'replicate-video')."),
+          providers: z
+            .record(
+              z.string(),
+              z.object({
+                base_url: z.string().describe("Base URL of the media generation API"),
+                api_key_env: z
+                  .string()
+                  .optional()
+                  .describe("Name of the environment variable that holds the API key"),
+                api_key: z.string().optional().describe("Hard-coded API key (prefer api_key_env)"),
+                capabilities: z
+                  .array(z.enum(["image", "video", "text"]))
+                  .default(["image"])
+                  .describe("Capabilities of this provider"),
+                image: z
+                  .object({
+                    endpoint: z.string().describe("API path for image generation, e.g. '/v1/images/generations'"),
+                    extra_payload: z.record(z.string(), z.unknown()).optional().describe("Fixed fields merged into every request body"),
+                    prompt_field: z.string().optional().describe("Request body field for the prompt (default: 'prompt')"),
+                    count_field: z.string().optional().describe("Request body field for the count (default: 'n')"),
+                    ref_images_field: z.string().optional().describe("Request body field for reference/input images (default: 'image')"),
+                    size_field: z.string().optional().describe("Request body field for image size/aspect ratio (default: 'size')"),
+                    result_path: z.string().optional().describe("Dot-notation path to the result array in the response"),
+                    result_type: z.enum(["url", "base64"]).default("url").describe("How results are encoded in the response"),
+                    result_mime: z.string().optional().describe("MIME type of generated files (default: 'image/png')"),
+                  })
+                  .optional()
+                  .describe("Image generation endpoint configuration"),
+                video: z
+                  .object({
+                    endpoint: z.string().describe("API path for video generation"),
+                    extra_payload: z.record(z.string(), z.unknown()).optional().describe("Fixed fields merged into every request body"),
+                    prompt_field: z.string().optional().describe("Request body field for the prompt (default: 'prompt')"),
+                    input_images_field: z.string().optional().describe("Request body field for input images (default: 'images')"),
+                    duration_field: z.string().optional().describe("Request body field for video duration (default: 'duration')"),
+                    result_path: z.string().optional().describe("Dot-notation path to the result array in the response"),
+                    result_type: z.enum(["url", "base64"]).default("url").describe("How results are encoded in the response"),
+                    result_mime: z.string().optional().describe("MIME type of generated files (default: 'video/mp4')"),
+                  })
+                  .optional()
+                  .describe("Video generation endpoint configuration"),
+              }),
+            )
+            .optional()
+            .describe("Custom media generation provider configurations"),
+        })
+        .optional()
+        .describe(
+          "Media generation configuration for image/video APIs. See https://opencode.ai/docs/media for details.",
+        ),
     })
     .strict()
     .meta({
